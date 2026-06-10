@@ -1,0 +1,15 @@
+.env
+config/database.php
+
+.vscode/
+.idea/
+*.swp
+
+.DS_Store
+Thumbs.db
+
+/vendor/
+/node_modules/
+
+/public/uploads/*
+!/public/uploads/.gitkeep

@@ -1,0 +1,60 @@
+name: Advanced Deploy to Render
+
+on:
+  push:
+    branches: [ "main" ] 
+
+jobs:
+  deploy:
+    name: Build & Poll Render Status
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+      contents: read
+
+    steps:
+      - name: Start GitHub Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: 'fpt-shop / production'
+
+      - name: Trigger Render Deploy
+        id: trigger
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          echo "Deploy triggered successfully."
+
+      - name: Wait for Render to go Live
+        run: |
+          while true; do
+            STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys?limit=1" \
+              | jq -r '.[0].deploy.status')
+            
+            echo "Current Render Status: $STATUS"
+
+            if [ "$STATUS" == "live" ]; then
+              echo "Deploy is LIVE!"
+              exit 0
+            elif [ "$STATUS" == "build_failed" ] || [ "$STATUS" == "update_failed" ] || [ "$STATUS" == "canceled" ]; then
+              echo "Deploy FAILED with status: $STATUS"
+              exit 1
+            fi
+
+            echo "Still building... waiting 30 seconds."
+            sleep 30
+          done
+
+      - name: Update GitHub Deployment Status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: 'fpt-shop / production'
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: 'https://fpt-shop.onrender.com'

@@ -1,0 +1,126 @@
+<?php
+require_once __DIR__ . '/../../config/db_module.php';
+
+class BaseModel
+{
+    protected $table;
+    protected ?mysqli $link;
+
+    public function __construct($table)
+    {
+        $this->table = $table;
+        $this->link = null;
+        taoKetNoi($this->link);
+    }
+
+
+    //select *
+    public function getAll()
+    {
+        $sql = "SELECT * FROM {$this->table}";
+
+        $result = chayTruyVanTraVeDL($this->link, $sql);
+
+        $data = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $data[] = $row;
+        }
+        return $data;
+    }
+
+    //select theo Id
+    public function getById($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = '$id'";
+
+        $result = chayTruyVanTraVeDL($this->link, $sql);
+
+        return mysqli_fetch_assoc($result);
+    }
+
+    //insert
+    public function create($data)
+    {
+        //lấy key và nối chuỗi
+        $arrayKeys = array_keys($data);
+        $columns = implode(', ', $arrayKeys);
+
+        //xử lý value - NULL không được bọc trong dấu nháy
+        $values = [];
+        foreach ($data as $value) {
+            if ($value === null) {
+                $values[] = 'NULL';
+            } else {
+                $values[] = "'" . $value . "'";
+            }
+        }
+        $valuesString = implode(', ', $values);
+
+        $sql = "INSERT INTO {$this->table} ($columns) VALUES ($valuesString)";
+
+        chayTruyVanKhongTraVeDL($this->link, $sql);
+
+        return mysqli_insert_id($this->link);
+    }
+
+    //update
+    public function update($id, $data)
+    {
+        $updates = [];
+        foreach ($data as $key => $value) {
+            if ($value === null) {
+                $updates[] = "$key = NULL";
+            } else {
+                $updates[] = "$key = '$value'";
+            }
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $updates) . " WHERE id = '$id'";
+
+        chayTruyVanKhongTraVeDL($this->link, $sql);
+
+        return mysqli_affected_rows($this->link);
+    }
+
+    //delete
+    public function delete($id)
+    {
+        if (!empty($id)) {
+            $sql = "DELETE FROM {$this->table} WHERE id = '$id'";   //xóa có điều kiện
+        } else {
+            $sql = "DELETE FROM {$this->table}";                    //xóa hết
+        }
+
+        chayTruyVanKhongTraVeDL($this->link, $sql);
+
+        return mysqli_affected_rows($this->link);
+    }
+
+    //dùng cho SELECT phức tạp (có JOIN, WHERE...)
+    public function query($sql)
+    {
+        $result = chayTruyVanTraVeDL($this->link, $sql);
+
+        $data = [];
+        if ($result instanceof mysqli_result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    public function execute($sql)
+    {
+        chayTruyVanKhongTraVeDL($this->link, $sql);
+        return mysqli_affected_rows($this->link);
+    }
+
+    public function __destruct()
+    {
+        if ($this->link) {
+            mysqli_close($this->link);
+        }
+    }
+}
+?>
