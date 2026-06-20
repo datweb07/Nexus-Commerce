@@ -13,20 +13,20 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
 
 ## Tasks
 
-- [ ] 1. PHP API Foundation — environment, controller scaffold, and route registrations
-  - [ ] 1.1 Add `AI_AGENT_ORIGIN` and `AI_API_SECRET` to `commerce-core/.env` and `commerce-core/.env.example`
+- [x] 1. PHP API Foundation — environment, controller scaffold, and route registrations
+  - [x] 1.1 Add `AI_AGENT_ORIGIN` and `AI_API_SECRET` to `commerce-core/.env` and `commerce-core/.env.example`
     - Append two new variables to both files following the existing key=value format
     - Use placeholder values in `.env.example` (e.g. `AI_AGENT_ORIGIN=http://localhost:3001`, `AI_API_SECRET=change-me`)
     - _Requirements: 7.1, 7.2, 7.5_
 
-  - [ ] 1.2 Create `commerce-core/app/controllers/client/AiAgentController.php` with the CORS/auth guard and JSON response helper
+  - [x] 1.2 Create `commerce-core/app/controllers/client/AiAgentController.php` with the CORS/auth guard and JSON response helper
     - Implement private `handleCorsAndAuth()`: reads `AI_AGENT_ORIGIN` and `AI_API_SECRET` via `EnvSetup`, emits CORS headers, short-circuits `OPTIONS` with `204`, rejects missing/wrong `X-Api-Key` with `401 {"message":"..."}`
     - Implement private `jsonResponse(int $status, mixed $data): never` that sets `Content-Type: application/json; charset=utf-8`, calls `http_response_code`, echoes `json_encode($data, JSON_UNESCAPED_UNICODE)`, then `exit`
     - Add six public method stubs: `products()`, `variants(int $id)`, `cartAdd()`, `promotionsOptimal()`, `checkoutApplyCoupon()`, `orderStatus(string $code)` — each calls `$this->handleCorsAndAuth()` then returns an empty `200` for now
     - Follow the no-namespace pattern used by the existing `ApiController.php`
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-  - [ ] 1.3 Register all six routes (plus preflight block) in `commerce-core/app/routes/client/client.php`
+  - [x] 1.3 Register all six routes (plus preflight block) in `commerce-core/app/routes/client/client.php`
     - Add an early-exit preflight block: `if (str_starts_with($path, 'api/ai/') && $_SERVER['REQUEST_METHOD'] === 'OPTIONS')` → load `AiAgentController`, call `handleCorsAndAuth()`, exit
     - Register `GET api/ai/products` (exact match)
     - Register `GET api/ai/products/{id}/variants` via `preg_match('#^api/ai/products/(\d+)/variants$#')`
@@ -38,8 +38,8 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1–7.4_
 
 
-- [ ] 2. PHP API Endpoints — implement the six business-logic methods
-  - [ ] 2.1 Implement `GET /api/ai/products` in `AiAgentController::products()`
+- [x] 2. PHP API Endpoints — implement the six business-logic methods
+  - [x] 2.1 Implement `GET /api/ai/products` in `AiAgentController::products()`
     - Validate query params: `gia_min`, `gia_max` — `ctype_digit` or empty; `danh_muc_id` — positive int; `limit` — int 1–50, default 20; `hang` — string; `q` — string
     - Return `400 {"message":"..."}` for any invalid param
     - Build SQL from `san_pham` joined with `danh_muc`, subqueries for `gia_thap_nhat`/`gia_cao_nhat` (MIN/MAX of `phien_ban_san_pham.gia_ban`), `tong_ton_kho` (SUM of active variant stock), `anh_dai_dien` (from `hinh_anh_san_pham WHERE la_anh_chinh = 1`)
@@ -61,7 +61,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Use eris/eris or equivalent PHP PBT library; tag each: `// Feature: autonomous-retail-concierge, Property {N}: {text}`
     - _Requirements: 1.1–1.10_
 
-  - [ ] 2.3 Implement `GET /api/ai/products/{id}/variants` in `AiAgentController::variants(int $id)`
+  - [x] 2.3 Implement `GET /api/ai/products/{id}/variants` in `AiAgentController::variants(int $id)`
     - Validate parent product exists with `trang_thai = 'CON_BAN'`; return `404 {"message":"..."}` if not
     - Use `PhienBanSanPham::layPhienBanTheoSanPham($id)` then filter to `trang_thai IN ('CON_HANG','CON_BAN')`
     - Decode `thuoc_tinh_bien_the` from JSON string to object in the response
@@ -74,7 +74,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - _Requirements: 2.1, 2.2_
 
 
-  - [ ] 2.5 Implement `POST /api/ai/cart/add` in `AiAgentController::cartAdd()`
+  - [x] 2.5 Implement `POST /api/ai/cart/add` in `AiAgentController::cartAdd()`
     - Read JSON body with `json_decode(file_get_contents('php://input'), true)`
     - Validate `phien_ban_id` (positive int) and `so_luong` (positive int); return `400` if missing
     - Validate at least one of `session_id` or `nguoi_dung_id` is present; return `400` if both absent
@@ -92,7 +92,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.5**
     - _Requirements: 3.1–3.7_
 
-  - [ ] 2.7 Implement `GET /api/ai/promotions/optimal` in `AiAgentController::promotionsOptimal()`
+  - [x] 2.7 Implement `GET /api/ai/promotions/optimal` in `AiAgentController::promotionsOptimal()`
     - Validate `tong_tien` param: must be present and non-negative integer; return `400` if not
     - Query `ma_giam_gia` where `trang_thai = 'HOAT_DONG'` AND `don_toi_thieu <= tong_tien` AND date window valid AND usage limit not reached
     - Apply `MaGiamGia::tinhSoTienGiam` to each candidate; select the one with the highest `tien_giam`
@@ -106,7 +106,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - _Requirements: 4.1, 4.2_
 
 
-  - [ ] 2.9 Implement `POST /api/ai/checkout/apply-coupon` in `AiAgentController::checkoutApplyCoupon()`
+  - [x] 2.9 Implement `POST /api/ai/checkout/apply-coupon` in `AiAgentController::checkoutApplyCoupon()`
     - Read JSON body; validate `ma_code` (string) and `tong_tien` (non-negative number) are present; return `400` if absent
     - Call `MaGiamGia::timTheoMaCode($ma_code)`; return `404 {"message":"Mã giảm giá không tồn tại"}` if null
     - Call `MaGiamGia::kiemTraHopLe($voucher, $tong_tien)`; on failure call `MaGiamGia::layThongBaoLoiMaGiamGia` for the Vietnamese message and return `422`
@@ -119,7 +119,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - **Validates: Requirements 5.2**
     - _Requirements: 5.2_
 
-  - [ ] 2.11 Implement `GET /api/ai/orders/{order_code}` in `AiAgentController::orderStatus(string $code)`
+  - [x] 2.11 Implement `GET /api/ai/orders/{order_code}` in `AiAgentController::orderStatus(string $code)`
     - Load `DonHang` by `ma_don_hang = $code`; return `404 {"message":"..."}` if not found
     - If `nguoi_dung_id` query param is supplied, verify `don_hang.nguoi_dung_id` matches; return `403 {"message":"..."}` on mismatch
     - Load line items via `DonHang::laySanPhamTrongDon`
@@ -133,7 +133,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - _Requirements: 6.1, 6.2_
 
 - [ ] 3. PHP API Tests — security guard and integration example tests
-  - [ ] 3.1 Write PHPUnit example and integration tests for PHP API (Properties 15 + Req integration scenarios)
+  - [~] 3.1 Write PHPUnit example and integration tests for PHP API (Properties 15 + Req integration scenarios)
     - **Property 15: API key authentication invariant** — for any `/api/ai/*` endpoint, missing or wrong `X-Api-Key` must return `401`
     - **Validates: Requirements 7.5**
     - Example: default product ordering returns ≤ 20 results ordered by `diem_danh_gia DESC` — Req 1.8
@@ -145,7 +145,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Example: CORS headers present on all responses; preflight returns `204` — Req 7.1–7.4
     - _Requirements: 1.8, 3.7, 4.3, 5.3, 5.4, 6.4, 7.1–7.5_
 
-- [ ] 4. Checkpoint — PHP layer complete
+- [~] 4. Checkpoint — PHP layer complete
   - Ensure all PHPUnit tests pass, ask the user if questions arise.
 
 
@@ -156,7 +156,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Create directory stubs: `src/`, `src/routes/`, `src/tools/`
     - _Requirements: 8.1, 8.2_
 
-  - [ ] 5.2 Create `ai-agent/src/index.js` — Express app entry point
+  - [~] 5.2 Create `ai-agent/src/index.js` — Express app entry point
     - Load `dotenv/config` at the top
     - Create Express app, mount `cors({ origin: process.env.ALLOWED_ORIGIN })`
     - Mount `express.json({ limit: '1mb' })`
@@ -166,7 +166,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Listen on `process.env.PORT ?? 3001`
     - _Requirements: 8.1, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ] 5.3 Create `ai-agent/src/routes/chat.js` — `POST /api/chat` handler with `streamText` and context injection
+  - [~] 5.3 Create `ai-agent/src/routes/chat.js` — `POST /api/chat` handler with `streamText` and context injection
     - Define `SYSTEM_PROMPT` constant in Vietnamese (full text from design spec Section 5 "System Prompt Specification")
     - Validate `req.body.messages` is a non-empty array; return `400 { "error": "messages array required" }` otherwise
     - Extract `context = req.body.context ?? {}` (`session_id`, `nguoi_dung_id`)
@@ -178,14 +178,14 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
 
 
 - [ ] 6. Node.js AI Tools — implement the four tool files
-  - [ ] 6.1 Create shared `ai-agent/src/tools/callPhpApi.js` helper
+  - [~] 6.1 Create shared `ai-agent/src/tools/callPhpApi.js` helper
     - Export `async function callPhpApi(method, path, { params, body } = {})` that sets `X-Api-Key: process.env.PHP_API_SECRET`
     - Appends `params` as URLSearchParams for GET requests
     - On non-2xx: returns `{ error: "HTTP {status}: {text}" }`
     - On network error: returns `{ error: "Network error: {message}" }`
     - _Requirements: 10.2, 11.2, 12.2, 13.2_
 
-  - [ ] 6.2 Create `ai-agent/src/tools/searchProducts.js` — `search_and_reason_products` tool
+  - [~] 6.2 Create `ai-agent/src/tools/searchProducts.js` — `search_and_reason_products` tool
     - Define Zod schema: `query` (string required), `gia_min` (number optional), `gia_max` (number optional), `danh_muc_id` (number optional), `hang` (string optional)
     - `execute`: call `callPhpApi('GET', '/api/ai/products', { params })` with all non-undefined params
     - On success: return raw JSON array so LLM can reason over products
@@ -193,7 +193,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - On error: return `{ error }` without throwing
     - _Requirements: 10.1–10.5_
 
-  - [ ] 6.3 Create `ai-agent/src/tools/addToCart.js` — `add_to_cart_autonomously` tool
+  - [~] 6.3 Create `ai-agent/src/tools/addToCart.js` — `add_to_cart_autonomously` tool
     - Define Zod schema: `phien_ban_id` (number int positive), `so_luong` (number int min 1)
     - `execute(params, context)`: call `callPhpApi('POST', '/api/ai/cart/add', { body: { phien_ban_id, so_luong, session_id: context.session_id, nguoi_dung_id: context.nguoi_dung_id } })`
     - On `422` response: return `{ error: <Vietnamese message from PHP> }`
@@ -201,7 +201,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - On other error: return `{ error }` without throwing
     - _Requirements: 11.1–11.5_
 
-  - [ ] 6.4 Create `ai-agent/src/tools/huntAndApplyPromotions.js` — `hunt_and_apply_promotions` tool
+  - [~] 6.4 Create `ai-agent/src/tools/huntAndApplyPromotions.js` — `hunt_and_apply_promotions` tool
     - Define Zod schema: `tong_tien` (number min 0)
     - `execute`: Step 1 — call `callPhpApi('GET', '/api/ai/promotions/optimal', { params: { tong_tien } })`
     - If `coupon` is null: return `{ available: false, message: <Vietnamese message from PHP> }`
@@ -210,7 +210,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - On any error in either step: return `{ error }` without throwing
     - _Requirements: 12.1–12.6_
 
-  - [ ] 6.5 Create `ai-agent/src/tools/trackOrder.js` — `track_order_status` tool
+  - [~] 6.5 Create `ai-agent/src/tools/trackOrder.js` — `track_order_status` tool
     - Define Zod schema: `order_code` (string required)
     - `execute(params, context)`: build URL `/api/ai/orders/{order_code}`, append `nguoi_dung_id` as query param when present in context
     - On `404`: return `{ error: 'Không tìm thấy đơn hàng với mã này.' }`
@@ -221,7 +221,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
 
 
 - [ ] 7. Node.js Tests — Jest property-based and integration tests
-  - [ ] 7.1 Write Jest integration/example tests for server and tools
+  - [~] 7.1 Write Jest integration/example tests for server and tools
     - `GET /health` → `{ status: 'ok' }` — Req 8.3
     - `POST /api/chat` without `messages` → `400 { "error": "messages array required" }` — Req 9.5
     - `POST /api/chat` with valid messages returns streaming response (mock Groq) — Req 9.1, 9.3
@@ -238,12 +238,12 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - **Validates: Requirements 12.2, 12.3, 12.4**
     - _Requirements: 12.2, 12.3, 12.4_
 
-- [ ] 8. Checkpoint — Node.js microservice complete
+- [~] 8. Checkpoint — Node.js microservice complete
   - Ensure all Jest tests pass, ask the user if questions arise.
 
 
 - [ ] 9. Frontend Widget — PHP context injection and widget implementation
-  - [ ] 9.1 Inject session/user context variables into PHP layout view
+  - [~] 9.1 Inject session/user context variables into PHP layout view
     - Locate the PHP layout view file (e.g. `commerce-core/app/views/client/layout/header.php` or equivalent master layout)
     - Add a `<script>` block before the closing `</body>` tag:
       ```php
@@ -253,7 +253,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Ensure `session_start()` has already been called before this point (it is — existing session middleware handles it)
     - _Requirements: 18.1, 18.2, 18.3_
 
-  - [ ] 9.2 Create `commerce-core/public/js/chatbot-widget.js` — full IIFE widget
+  - [~] 9.2 Create `commerce-core/public/js/chatbot-widget.js` — full IIFE widget
     - Wrap entire file in `(function() { ... })();`
     - **Config block**: read `window.__nexus_session_id`, `window.__nexus_user_id`; define `AI_AGENT_URL` constant (e.g. `'http://localhost:3001'`)
     - **DOM factory**: create FAB button (fixed bottom-right, high z-index), chat window (hidden by default), message list `<div>`, text `<input>`, send `<button>`, close button
@@ -271,13 +271,13 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - **Event wiring**: FAB click, close button click, send button click, Enter key on input
     - _Requirements: 15.1–15.7, 16.1–16.5, 17.1–17.4_
 
-  - [ ] 9.3 Include widget `<script>` tag in PHP layout view
+  - [~] 9.3 Include widget `<script>` tag in PHP layout view
     - Add `<script src="/js/chatbot-widget.js"></script>` at the bottom of the layout body, after the context injection `<script>` block from task 9.1
     - _Requirements: 15.7_
 
 
 - [ ] 10. Frontend Widget Tests — Vitest + jsdom
-  - [ ] 10.1 Write Vitest example tests for widget UI and streaming behaviour
+  - [~] 10.1 Write Vitest example tests for widget UI and streaming behaviour
     - Set up `vitest` + `jsdom` + `@vitest/coverage-v8` in a `vitest.config.js` at workspace root or `commerce-core/`
     - FAB click opens chat window (assert class/display state) — Req 15.2
     - FAB/close click closes chat window — Req 15.3
@@ -299,7 +299,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - **Validates: Requirements 18.3**
     - _Requirements: 18.3_
 
-- [ ] 11. Final Checkpoint — full system wired together
+- [~] 11. Final Checkpoint — full system wired together
   - Ensure all PHPUnit, Jest, and Vitest tests pass, ask the user if questions arise.
 
 
