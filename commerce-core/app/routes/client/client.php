@@ -4,6 +4,14 @@ function clientRoute(string $uri): void
 {
 	$path = trim(parse_url($uri, PHP_URL_PATH) ?? '/', '/');
 
+	// Early-exit preflight block for all /api/ai/* routes
+	if (str_starts_with($path, 'api/ai/') && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->handleCorsAndAuth();
+		exit;
+	}
+
 	if ($path === '' || $path === 'index.php') {
 		require_once dirname(__DIR__, 2) . '/controllers/client/HomeController.php';
 		$controller = new \App\Controllers\Client\HomeController();
@@ -616,6 +624,49 @@ function clientRoute(string $uri): void
 		return;
 	}
 
+
+	// AI Agent API routes
+	if ($path === 'api/ai/products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->products();
+		return;
+	}
+
+	if (preg_match('#^api/ai/products/(\d+)/variants$#', $path, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->variants((int)$matches[1]);
+		return;
+	}
+
+	if ($path === 'api/ai/cart/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->cartAdd();
+		return;
+	}
+
+	if ($path === 'api/ai/promotions/optimal' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->promotionsOptimal();
+		return;
+	}
+
+	if ($path === 'api/ai/checkout/apply-coupon' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->checkoutApplyCoupon();
+		return;
+	}
+
+	if (preg_match('#^api/ai/orders/([A-Z0-9\-]+)$#i', $path, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+		require_once dirname(__DIR__, 2) . '/controllers/client/AiAgentController.php';
+		$controller = new AiAgentController();
+		$controller->orderStatus($matches[1]);
+		return;
+	}
 
 	require_once dirname(__DIR__, 2) . '/views/client/home/index.php';
 }
