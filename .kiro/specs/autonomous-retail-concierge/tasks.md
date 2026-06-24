@@ -156,7 +156,7 @@ Implementation follows the suggested phases: PHP foundation → PHP endpoints �
     - Create directory stubs: `src/`, `src/routes/`, `src/tools/`
     - _Requirements: 8.1, 8.2_
 
-  - [~] 5.2 Create `ai-agent/src/index.js` — Express app entry point
+  - [ ] 5.2 Create `ai-agent/src/index.js` — Express app entry point
     - Load `dotenv/config` at the top
     - Create Express app, mount `cors({ origin: process.env.ALLOWED_ORIGIN })`
     - Mount `express.json({ limit: '1mb' })`
